@@ -1,0 +1,61 @@
+---
+- name: k8s deployment using ansible
+  hosts: k8s
+  become: true
+  remote_user: k8smaster
+  
+  tasks:
+          - name: install python3-pip
+            apt:
+                    name: python3-pip
+                    state: present
+                
+
+            
+          
+          - name: install kubernetes
+            pip:
+                name: kubernetes
+                state: present       
+
+          - name: install docker
+            pip: 
+                 name: docker
+                 state: present 
+                
+          - name: copy webapp to remote server
+            copy: src=/var/lib/jenkins/workspace/projet9/webapp/target/webapp.war dest=/home/k8smaster/projet9/ressources/webapp.war     
+       
+          - name: create docker image            
+            docker_image:
+                    force_source: yes
+                    name: "samiibnbougatef/tomcat:tomcat{{BN}}"
+                    build:
+                            path: /home/k8smaster/projet9/
+                            dockerfile: Dockerfile
+                            pull: yes
+                    state: present 
+                    source: build
+          - name: login to docker hub
+            docker_login:
+                    
+                    username: samiibnbougatef
+                    password: bugattisami29mp
+                    email: samiibnbougatef@gmail.com
+                    reauthorize: yes
+          
+          - name: push docker image
+            command: docker push "samiibnbougatef/tomcat:tomcat{{BN}}"
+          - name: delete docker image 
+            command: docker rmi -f "samiibnbougatef/tomcat:tomcat{{BN}}"
+          - name: change image name k8s manifest
+            command: cat tomcat-deploy.yml 
+            command: sed -i 's+samiibnbougatef/tomcat.*+samiibnbougatef/tomcat:tomcat{{BN}}+g' tomcat-deploy.yml  
+          
+          - name: deployment k8s     
+            kubernetes.core.k8s:
+                                  
+                    state: present
+                    kubeconfig: /home/k8smaster/.kube/config
+                    namespace: default
+                    src: tomcat-deploy.yml
