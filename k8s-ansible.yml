@@ -40,7 +40,7 @@
             docker_login:
                     
                     username: samiibnbougatef
-                    password: bugattisami29mp
+                    password: 
                     email: samiibnbougatef@gmail.com
                     reauthorize: yes
           
